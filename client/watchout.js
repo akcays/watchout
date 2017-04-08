@@ -1,7 +1,7 @@
 // start slingin' some d3 here.
 //Hello
 
-//Initializes the state of the board
+///////Initializes the state of the board////////
 var gameOptions = {
   'height': 700,
   'width': 1000,
@@ -9,13 +9,13 @@ var gameOptions = {
   'padding': 40
 };
 
-//Initialize game score
 var gameStats = {
-  'score': 3,
-  'bestScore': 0
+  'score': 0,
+  'bestScore': 0,
+  'collisions': 0
 };
 
-//Create the board for game
+///////Create the board for game////////////////
 var axes = {
   'x': d3.scale.linear().domain([0, 100]).range([0, gameOptions.width]),
   'y': d3.scale.linear().domain([0, 100]).range([0, gameOptions.height])
@@ -25,42 +25,29 @@ var svg = d3.select('.board').append('svg')
   .attr('width', gameOptions.width)
   .attr('height', gameOptions.height);
 
-var rect = svg.append("rect")
+var rect = svg.append('rect')
   .attr('class', 'newboard')
-  .attr("width", gameOptions.width)
-  .attr("height", gameOptions.height)
-  .style("stroke", "#999999")
-  .style("fill", "#F6F6F6");
+  .attr('width', gameOptions.width)
+  .attr('height', gameOptions.height)
+  .style('stroke', '#999999')
+  .style('fill', '#F6F6F6');
 
 
-
-//Update the score and the bestscore
+///////Update the score and the bestscore///////
 var updateScore = function() {
-  d3.select('.current').select('span').text(gameStats.score.toString())
-};
-
-var updateBestScore = function() {
   if (gameStats.score > gameStats.bestScore) {
     gameStats.bestScore = gameStats.score;
   }
+  d3.select('.collisions').select('span').text(gameStats.collisions.toString());
   d3.select('.highscore').select('span').text(gameStats.bestScore.toString());
+  d3.select('.current').select('span').text(gameStats.score.toString());
+
+  gameStats.score++;
 };
 
-//Added Drag to Player
-var drag = d3.behavior.drag()
-    .on("drag", dragMove)
-    // .origin(function() {
-    //     var t = d3.transform(d3.select(this).attr("transform"));
-    //     console.log(t);
-    //     console.log(d3.select('circle').attr('cy'));
-    //     return {x: t.translate[0], y: t.translate[1]};
-    // });
- // .on('drag', function() { circle.attr('cx', d3.event.x)
- //                                .attr('cy', d3.event.y);
- //        })
 
-
-function dragMove(d) {
+////////Added drag to Player///////////////////
+var dragMove = function() {
   var x = d3.event.x;
   var y = d3.event.y;
   // Setting the min and max limits for player to stay inside the board
@@ -68,6 +55,7 @@ function dragMove(d) {
   var maxX = gameOptions.width - gameOptions.padding;
   var minY = gameOptions.padding;
   var maxY = gameOptions.height - gameOptions.padding;
+
   if (x > maxX) {
     x = maxX;
   } else if (x < minX) {
@@ -78,66 +66,79 @@ function dragMove(d) {
   } else if (y < minY) {
     y = minY;
   }
-  //console.log(x, y);
- // d3.select('circle').attr("transform", "translate(" + x + "," + y + ")");
-  player.attr('cx', x).attr('cy', y);
-}
 
-//Create purple circle player
+  player.attr('cx', x).attr('cy', y);
+};
+
+var drag = d3.behavior.drag()
+    .on('drag', dragMove);
+
+
+///////Create purple circle player/////////////
 var player = svg.append('circle')
   .attr('class', 'player')
   .attr('cx', axes.x(50))
   .attr('cy', axes.y(50))
   .attr('r', 15)
-  .style('fill', 'purple')
+  .style('fill', function() {
+  return 'hsl(' + Math.random() * 360 + ',100%,50%)';
+})
   .call(drag);
-console.log(player);
-// d3.selectAll("circle.player").style("color", function() {
-//   return "hsl(" + Math.random() * 360 + ",100%,50%)";
-// });
 
-//Helper Function Gives Enemies their Starting Location
-var createBadGuys = function() {
-  var results ={
+
+////////Data for all badGuys//////////////////
+var badGuyArray = d3.range(gameOptions.numEnemies).map(function(enemy) {
+   var results = {
     'x': axes.x(Math.random() * 100),
     'y': axes.y(Math.random() * 100)
   };
   return results;
-};
-
-
-var badGuyArray = d3.range(gameOptions.numEnemies).map(function(enemy){
-  return createBadGuys();
 });
 
 var allEnemies = svg.selectAll('circle.enemies')
-  .data(badGuyArray)
+    .data(badGuyArray)
   .enter().append('circle')
-  .attr('class', 'enemies')
-  .attr('cx', function(d) {return d.x})
-  .attr('cy', function(d) {return d.y})
-  .attr('r', 15)
-  .style('fill', 'red');
+    .attr('class', 'enemies')
+    .attr('cx', function(d) { return d.x; })
+    .attr('cy', function(d) { return d.y; })
+    .attr('r', 20)
+    .style('fill', 'red');
 
-console.log(JSON.stringify(allEnemies));
+var moveEnemies = function() {
+  allEnemies
+    .transition()
+    .duration(2000)
+    .attr('cx', function(d) { return axes.x(Math.random() * 100) })
+    .attr('cy', function(d) { return axes.y(Math.random() * 100) })
 
-var detectCollision = function() {
-  var playerCoords = {x: parseFloat(player.attr('cx')), y: parseFloat(player.attr('cy')), r: parseFloat(player.attr('r'))};
-  var enemies = d3.selectAll('circle.enemies')[0];
-  for (var i = 0; i < 21; i++) {
-    console.log(enemies[i]);
-    var diffX = Math.abs(parseFloat(enemies[i].attr('cx')) - playerCoords.x);
-    var diffY = Math.abs(parseFloat(enemies[i].attr('cy')) - playerCoords.y);
-    var distance = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
-    var sumRadius = parseFloat(enemies[i].attr('r')) + playerCoords.r;
-    if (distance < sumRadius) {
-      console.log('COLLISOOONNN!!!');
-    }
-  };
+    setTimeout(moveEnemies, 2000);
 }
 
-setInterval(detectCollision, 500);
+
+// Implements collision detections between player and enemies
+var detectCollision = function() {
+  var playerCoords = {x: parseFloat(player.attr('cx')), y: parseFloat(player.attr('cy')), r: parseFloat(player.attr('r'))};
+
+  allEnemies.each(function(){
+    var currentEnemy = d3.select(this);
+
+    var diffX = Math.abs(parseFloat(currentEnemy.attr('cx')) - playerCoords.x);
+    var diffY = Math.abs(parseFloat(currentEnemy.attr('cy')) - playerCoords.y);
+    var distance = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
+    var sumRadius = parseFloat(currentEnemy.attr('r')) + playerCoords.r;
+
+    if (distance < sumRadius) {
+      console.log('COLLISIOOONNN!!!');
+      gameStats.score = 0;
+      gameStats.collisions++;
+    }
+  })
+};
+
+moveEnemies();
+setInterval(detectCollision, 200);
+setInterval(updateScore, 500);
 //useful methods
 //d3.behavior.drag
-// d3.mouse
-// d3.range
+//d3.mouse
+//d3.range
