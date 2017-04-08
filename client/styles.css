@@ -8,6 +8,7 @@ body{
   background-image: url("space.jpg");
   background-size: 100%;
 }
+
 div{
   -webkit-box-sizing: content-box;
   -moz-box-sizing: content-box;
@@ -22,6 +23,7 @@ div{
   text-overflow: ellipsis;
   text-shadow: 5px 5px 0 rgba(255,0,0,1) ;
 }
-/*.asteroid {
-  background-image: url("img_tree.png");
-}*/
+
+.enemies{
+  background-image: url("asteroid.png");
+}

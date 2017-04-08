@@ -30,7 +30,7 @@ var rect = svg.append('rect')
   .attr('width', gameOptions.width)
   .attr('height', gameOptions.height)
   .style('stroke', '#999999')
-  .style('fill', '#F6F6F6');
+  .style('fill', '#252323');
 
 
 ///////Update the score and the bestscore///////
@@ -74,26 +74,31 @@ var drag = d3.behavior.drag()
     .on('drag', dragMove);
 
 
-///////Create purple circle player/////////////
+///////Create player circle////////////////////
 var player = svg.append('circle')
   .attr('class', 'player')
   .attr('cx', axes.x(50))
   .attr('cy', axes.y(50))
   .attr('r', 15)
   .style('fill', function() {
-  return 'hsl(' + Math.random() * 360 + ',100%,50%)';
-})
+    return 'hsl(' + Math.random() * 360 + ',100%,50%)';
+  })
   .call(drag);
 
 
 ////////Data for all badGuys//////////////////
-var badGuyArray = d3.range(gameOptions.numEnemies).map(function(enemy) {
-   var results = {
-    'x': axes.x(Math.random() * 100),
-    'y': axes.y(Math.random() * 100)
-  };
-  return results;
-});
+
+var createDataArray = function(n) {
+  return d3.range(n).map(function(ele) {
+    var results = {
+      'x': axes.x(Math.random() * 100),
+      'y': axes.y(Math.random() * 100)
+    };
+    return results;
+  });
+};
+
+var badGuyArray = createDataArray(gameOptions.numEnemies);
 
 var allEnemies = svg.selectAll('circle.enemies')
     .data(badGuyArray)
@@ -108,35 +113,89 @@ var moveEnemies = function() {
   allEnemies
     .transition()
     .duration(2000)
-    .attr('cx', function(d) { return axes.x(Math.random() * 100) })
-    .attr('cy', function(d) { return axes.y(Math.random() * 100) })
+    .attr('cx', function(d) { return axes.x(Math.random() * 100); })
+    .attr('cy', function(d) { return axes.y(Math.random() * 100); });
 
-    setTimeout(moveEnemies, 2000);
-}
+  setTimeout(moveEnemies, 2000);
+};
 
+var blinkyArray = createDataArray(1);
+
+var blinky = svg.selectAll('circle.blinky')
+  .data(blinkyArray)
+  .enter().append('circle')
+  .attr('class', 'blinky')
+  .attr('cx', function(d) { return axes.x(Math.random() * 90); })
+  .attr('cy', function(d) { return axes.y(Math.random() * 90); })
+  .attr('r', 10)
+  .style('fill', 'white');
+
+var blinkDot = function() {
+  blinky
+    .transition()
+    .duration(300)
+    .style('fill-opacity', '0')
+    .transition()
+    .duration(300)
+    .style('fill-opacity', '1');
+
+  setTimeout(blinkDot, 600);
+};
 
 // Implements collision detections between player and enemies
-var detectCollision = function() {
+var detectCollision = function(arrayNodes, callback) {
   var playerCoords = {x: parseFloat(player.attr('cx')), y: parseFloat(player.attr('cy')), r: parseFloat(player.attr('r'))};
 
-  allEnemies.each(function(){
-    var currentEnemy = d3.select(this);
+  arrayNodes.each(function() {
+    var currentObj = d3.select(this);
 
-    var diffX = Math.abs(parseFloat(currentEnemy.attr('cx')) - playerCoords.x);
-    var diffY = Math.abs(parseFloat(currentEnemy.attr('cy')) - playerCoords.y);
+    var diffX = Math.abs(parseFloat(currentObj.attr('cx')) - playerCoords.x);
+    var diffY = Math.abs(parseFloat(currentObj.attr('cy')) - playerCoords.y);
     var distance = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
-    var sumRadius = parseFloat(currentEnemy.attr('r')) + playerCoords.r;
+    var sumRadius = parseFloat(currentObj.attr('r')) + playerCoords.r;
 
     if (distance < sumRadius) {
+      callback();
       console.log('COLLISIOOONNN!!!');
-      gameStats.score = 0;
-      gameStats.collisions++;
     }
-  })
+  });
+};
+
+var enemyCollision = function() {
+  gameStats.score = 0;
+  gameStats.collisions++;
+};
+
+var blinkyCollision = function() {
+  var x = axes.x(Math.random() * 100);
+  var y = axes.y(Math.random() * 100);
+
+  var minX = gameOptions.padding;
+  var maxX = gameOptions.width - gameOptions.padding;
+  var minY = gameOptions.padding;
+  var maxY = gameOptions.height - gameOptions.padding;
+
+  if (x > maxX) {
+    x = maxX;
+  } else if (x < minX) {
+    x = minX;
+  }
+  if (y > maxY) {
+    y = maxY;
+  } else if (y < minY) {
+    y = minY;
+  }
+
+  gameStats.score +=10;
+  blinky.attr('cx', x)
+        .attr('cy', y);
+
 };
 
 moveEnemies();
-setInterval(detectCollision, 200);
+blinkDot();
+setInterval(() => detectCollision(allEnemies, enemyCollision), 200);
+setInterval(() => detectCollision(blinky, blinkyCollision), 200);
 setInterval(updateScore, 500);
 //useful methods
 //d3.behavior.drag
