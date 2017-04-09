@@ -26,4 +26,6 @@ div{
 
 .enemies{
   background-image: url("asteroid.png");
+  background-size: 100;
+  position: relative;
 }

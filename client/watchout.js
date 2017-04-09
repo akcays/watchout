@@ -109,14 +109,16 @@ var allEnemies = svg.selectAll('circle.enemies')
     .attr('r', 20)
     .style('fill', 'red');
 
-var moveEnemies = function() {
-  allEnemies
+var moveEnemies = function(element) {
+  element
     .transition()
+    .ease('linear')
     .duration(2000)
     .attr('cx', function(d) { return axes.x(Math.random() * 100); })
-    .attr('cy', function(d) { return axes.y(Math.random() * 100); });
-
-  setTimeout(moveEnemies, 2000);
+    .attr('cy', function(d) { return axes.y(Math.random() * 100); })
+    .each('end', function() {
+      moveEnemies(d3.select(this));
+    });
 };
 
 var blinkyArray = createDataArray(1);
@@ -143,7 +145,11 @@ var blinkDot = function() {
 };
 
 // Implements collision detections between player and enemies
+var prevEnemyCollision = false;
+
+// Enemy Collision
 var detectCollision = function(arrayNodes, callback) {
+  var collision = false;
   var playerCoords = {x: parseFloat(player.attr('cx')), y: parseFloat(player.attr('cy')), r: parseFloat(player.attr('r'))};
 
   arrayNodes.each(function() {
@@ -155,15 +161,56 @@ var detectCollision = function(arrayNodes, callback) {
     var sumRadius = parseFloat(currentObj.attr('r')) + playerCoords.r;
 
     if (distance < sumRadius) {
-      callback();
+      // callback();
+      collision = true;
       console.log('COLLISIOOONNN!!!');
     }
   });
+
+  if(collision) {
+    callback();
+    rect.style('fill', '#DF3B1D');
+
+    if(prevCollision !== collision) {
+      gameStats.collisions= gameStats.collisions + 1;
+    }
+  } else {
+    rect.style('fill', '#252323');
+  }
+
+  prevCollision = collision;
+};
+// end of enemy coll
+
+// blinky Collision
+var detectBlinkyCollision = function(arrayNodes, callback) {
+  var collision = false;
+  var playerCoords = {x: parseFloat(player.attr('cx')), y: parseFloat(player.attr('cy')), r: parseFloat(player.attr('r'))};
+
+  arrayNodes.each(function() {
+    var currentObj = d3.select(this);
+
+    var diffX = Math.abs(parseFloat(currentObj.attr('cx')) - playerCoords.x);
+    var diffY = Math.abs(parseFloat(currentObj.attr('cy')) - playerCoords.y);
+    var distance = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
+    var sumRadius = parseFloat(currentObj.attr('r')) + playerCoords.r;
+
+    if (distance < sumRadius) {
+      // callback();
+      collision = true;
+      console.log('COLLISIOOONNN!!!');
+    }
+  });
+
+  if(collision) {
+    callback();
+  }
 };
 
+// end of blinky coll
+
 var enemyCollision = function() {
-  gameStats.score = 0;
-  gameStats.collisions++;
+    gameStats.score = 0;
 };
 
 var blinkyCollision = function() {
@@ -189,13 +236,13 @@ var blinkyCollision = function() {
   gameStats.score +=10;
   blinky.attr('cx', x)
         .attr('cy', y);
-
 };
 
-moveEnemies();
+moveEnemies(allEnemies);
 blinkDot();
-setInterval(() => detectCollision(allEnemies, enemyCollision), 200);
-setInterval(() => detectCollision(blinky, blinkyCollision), 200);
+
+d3.timer(() => detectCollision(allEnemies, enemyCollision));
+d3.timer(() => detectBlinkyCollision(blinky, blinkyCollision));
 setInterval(updateScore, 500);
 //useful methods
 //d3.behavior.drag
