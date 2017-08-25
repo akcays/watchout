@@ -6,3 +6,5 @@ If you like to see it in action, just open up your terminal and type the followi
 
 - git clone https://github.com/akcays/watchout.git
 - open watchout/client/index.html
+
+...and have fun y'all!
