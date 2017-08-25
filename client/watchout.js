@@ -1,7 +1,6 @@
 // start slingin' some d3 here.
-//Hello
 
-///////Initializes the state of the board////////
+//Initializes the state of the board
 var gameOptions = {
   'height': 700,
   'width': 1000,
@@ -15,7 +14,7 @@ var gameStats = {
   'collisions': 0
 };
 
-///////Create the board for game////////////////
+//Create the board for game
 var axes = {
   'x': d3.scale.linear().domain([0, 100]).range([0, gameOptions.width]),
   'y': d3.scale.linear().domain([0, 100]).range([0, gameOptions.height])
@@ -33,7 +32,7 @@ var rect = svg.append('rect')
   .style('fill', '#252323');
 
 
-///////Update the score and the bestscore///////
+//Update the score and the bestscore
 var updateScore = function() {
   if (gameStats.score > gameStats.bestScore) {
     gameStats.bestScore = gameStats.score;
@@ -46,7 +45,7 @@ var updateScore = function() {
 };
 
 
-////////Added drag to Player///////////////////
+//Added drag to Player
 var dragMove = function() {
   var x = d3.event.x;
   var y = d3.event.y;
@@ -74,7 +73,7 @@ var drag = d3.behavior.drag()
     .on('drag', dragMove);
 
 
-///////Create player circle////////////////////
+//Create player circle
 var player = svg.append('circle')
   .attr('class', 'player')
   .attr('cx', axes.x(50))
@@ -86,8 +85,7 @@ var player = svg.append('circle')
   .call(drag);
 
 
-////////Data for all badGuys//////////////////
-
+//data for all badGuys
 var createDataArray = function(n) {
   return d3.range(n).map(function(ele) {
     var results = {
@@ -161,9 +159,7 @@ var detectCollision = function(arrayNodes, callback) {
     var sumRadius = parseFloat(currentObj.attr('r')) + playerCoords.r;
 
     if (distance < sumRadius) {
-      // callback();
       collision = true;
-      console.log('COLLISIOOONNN!!!');
     }
   });
 
@@ -196,9 +192,7 @@ var detectBlinkyCollision = function(arrayNodes, callback) {
     var sumRadius = parseFloat(currentObj.attr('r')) + playerCoords.r;
 
     if (distance < sumRadius) {
-      // callback();
       collision = true;
-      console.log('COLLISIOOONNN!!!');
     }
   });
 
@@ -206,8 +200,6 @@ var detectBlinkyCollision = function(arrayNodes, callback) {
     callback();
   }
 };
-
-// end of blinky coll
 
 var enemyCollision = function() {
     gameStats.score = 0;
@@ -244,6 +236,7 @@ blinkDot();
 d3.timer(() => detectCollision(allEnemies, enemyCollision));
 d3.timer(() => detectBlinkyCollision(blinky, blinkyCollision));
 setInterval(updateScore, 500);
+
 //useful methods
 //d3.behavior.drag
 //d3.mouse
